@@ -3,7 +3,7 @@ import json
 
 @st.cache_data
 def charger_donnees():
-    with open("gels.json", encoding="utf-8") as f:
+   with open("Registrenationaldesgels.json", encoding="utf-8") as f:
         return json.load(f)
 
 donnees = charger_donnees()
