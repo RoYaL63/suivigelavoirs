@@ -5,12 +5,23 @@ import difflib
 @st.cache_data
 def charger_donnees():
     with open("Registrenationaldesgels.json", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
 
-donnees = charger_donnees()
-registre = donnees.get("PublicationDetail", [])
-date_pub = donnees.get("DatePublication", "inconnue")
+    # Cas réel : le JSON contient "Publications" > "PublicationDetail"
+    publications = data.get("Publications", [])
+    if not publications:
+        return [], "Aucune publication"
 
+    publication = publications[0]
+    date = publication.get("Date", "inconnue")
+    details = publication.get("PublicationDetail", [])
+
+    return details, date
+
+# Chargement des données
+registre, date_pub = charger_donnees()
+
+# UI Streamlit
 st.set_page_config(page_title="Gel des avoirs", page_icon="🔒")
 st.title("🔍 Registre des gels des avoirs")
 st.write(f"📅 Dernière publication : **{date_pub}**")
@@ -30,7 +41,6 @@ if st.button("Rechercher"):
             prenom_personne = ""
             naissance = motifs = fondement = ""
 
-            # Extraire les détails
             for champ in personne.get("RegistreDetail", []):
                 if champ["TypeChamp"] == "PRENOM":
                     prenom_personne = champ["Valeur"]
@@ -41,7 +51,6 @@ if st.button("Rechercher"):
                 if champ["TypeChamp"] == "FONDEMENT_JURIDIQUE":
                     fondement = champ["Valeur"]
 
-            # Comparaison selon le mode sélectionné
             if recherche_floue:
                 nom_match = difflib.get_close_matches(nom, [nom_personne], n=1, cutoff=0.7)
                 prenom_match = True if not prenom else difflib.get_close_matches(prenom.lower(), [prenom_personne.lower()], n=1, cutoff=0.7)
