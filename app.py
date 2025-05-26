@@ -1,19 +1,46 @@
 import streamlit as st
 import requests
 import difflib
-import json
 
-st.set_page_config(page_title="Gels des avoirs - Recherche API", page_icon="🔒")
-st.title("🔍 Recherche dans le registre national des gels (API État)")
+# CONFIG PAGE
+st.set_page_config(
+    page_title="OtterWise – Recherche Gels des Avoirs",
+    page_icon="🦦",
+    layout="centered",
+)
 
-# Champs utilisateur
-nom = st.text_input("Nom (obligatoire)").strip().upper()
-prenom = st.text_input("Prénom (optionnel)").strip()
+# STYLE HEADER
+st.markdown("""
+<style>
+h1 {
+    text-align: center;
+    color: #00b4d8;
+}
+header, footer {visibility: hidden;}
+footer:after {
+    content:'Propulsé par OtterWise 🦦 – Solutions no-code intelligentes';
+    visibility: visible;
+    display: block;
+    text-align: center;
+    padding: 1rem;
+    color: gray;
+    font-size: 0.9em;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# BANDEAU
+st.image("https://avatars.githubusercontent.com/u/150202170", width=72)
+st.title("🔍 OtterWise – Registre des gels des avoirs")
+
+# FORM
+nom = st.text_input("🔠 Nom recherché (obligatoire)").strip().upper()
+prenom = st.text_input("🧑‍🦱 Prénom (optionnel)").strip()
 recherche_floue = st.checkbox("🔁 Activer la recherche approximative", value=True)
 
-# Endpoint officiel + User-Agent
+# API CONFIG
 API_URL = "https://gels-avoirs.dgtresor.gouv.fr/ApiPublic/api/v1/publication/derniere-publication-fichier-json"
-HEADERS = {"User-Agent": "OtterWise/RechercheGelsApp"}
+HEADERS = {"User-Agent": "OtterWise/1.0 (+https://otterwise.fr)"}
 
 @st.cache_data
 def charger_donnees_depuis_api():
@@ -28,17 +55,17 @@ def charger_donnees_depuis_api():
     except Exception as e:
         return None, str(e)
 
-# Bouton de recherche
-if st.button("Rechercher"):
+# RECHERCHE
+if st.button("🔍 Rechercher"):
     if not nom:
         st.warning("Merci d’entrer au moins un nom.")
     else:
         registre, date_pub = charger_donnees_depuis_api()
 
         if registre is None:
-            st.error(f"Erreur lors de la récupération des données : {date_pub}")
+            st.error(f"❌ Erreur API : {date_pub}")
         else:
-            st.write(f"📅 Données publiées le **{date_pub}**")
+            st.caption(f"📅 Dernière publication : {date_pub}")
             resultats = []
 
             for personne in registre:
@@ -73,15 +100,16 @@ if st.button("Rechercher"):
                     })
 
             st.success(f"✅ {len(resultats)} résultat(s) trouvé(s)")
+
             for r in resultats:
                 st.markdown("---")
-                st.write(f"**👤 {r.get('Nom')} {r.get('Prénom', '')}**")
-                if r.get("Naissance"):
+                st.markdown(f"### 👤 {r['Nom']} {r['Prénom']}")
+                if r["Naissance"]:
                     st.write(f"📅 Naissance : {r['Naissance']}")
-                if r.get("Motif"):
+                if r["Motif"]:
                     st.write(f"📌 Motif : {r['Motif']}")
-                if r.get("Fondement juridique"):
-                    st.write(f"⚖️ Base juridique : {r['Fondement juridique']}")
+                if r["Fondement juridique"]:
+                    st.write(f"⚖️ Fondement juridique : {r['Fondement juridique']}")
 
             if not resultats:
-                st.info("Aucun résultat trouvé. Essaie une autre orthographe ou active la recherche approximative.")
+                st.info("Aucun résultat trouvé. Essaie une autre orthographe ou active la recherche floue.")
